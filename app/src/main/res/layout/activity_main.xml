@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#212121"
+    tools:context=".MainActivity">
+
+    <!-- Display area with single result view -->
+    <TextView
+        android:id="@+id/displayTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#FFFDF0"
+        android:gravity="end"
+        android:minHeight="80dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp"
+        android:textColor="#212121"
+        android:textSize="40sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="125" />
+
+    <!-- Operation history display -->
+    <TextView
+        android:id="@+id/operationTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#FFFDF0"
+        android:gravity="end"
+        android:minHeight="40dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="8dp"
+        android:textColor="#757575"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/displayTextView"
+        tools:text="125 + 125 = 250" />
+
+    <!-- Calculator buttons in a grid - PORTRAIT MODE ONLY SHOWS BASIC BUTTONS -->
+    <GridLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:background="#E0E0E0"
+        android:columnCount="4"
+        android:padding="8dp"
+        android:rowCount="5"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/operationTextView">
+
+        <!-- Row 1: C, +/-, %, / -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/clearButton"
+            style="@style/CalculatorFunctionButton"
+            android:text="@string/clear" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/signButton"
+            style="@style/CalculatorFunctionButton"
+            android:text="@string/sign" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/percentButton"
+            style="@style/CalculatorFunctionButton"
+            android:text="@string/percent" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/divideButton"
+            style="@style/CalculatorOperationButton"
+            android:text="@string/divide" />
+
+        <!-- Row 2: 7, 8, 9, * -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button7"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/seven" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button8"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/eight" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button9"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/nine" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/multiplyButton"
+            style="@style/CalculatorOperationButton"
+            android:text="@string/multiply" />
+
+        <!-- Row 3: 4, 5, 6, + -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button4"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/four" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button5"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/five" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button6"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/six" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/plusButton"
+            style="@style/CalculatorOperationButton"
+            android:text="@string/plus" />
+
+        <!-- Row 4: 1, 2, 3, - -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button1"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/one" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button2"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/two" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button3"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/three" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/minusButton"
+            style="@style/CalculatorOperationButton"
+            android:text="@string/minus" />
+
+        <!-- Row 5: 0, ., = -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button0"
+            style="@style/CalculatorNumberButton"
+            android:layout_columnSpan="2"
+            android:layout_columnWeight="2"
+            android:text="@string/zero" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/decimalButton"
+            style="@style/CalculatorNumberButton"
+            android:text="@string/decimal" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/equalsButton"
+            style="@style/CalculatorEqualsButton"
+            android:text="@string/equals" />
+    </GridLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base style for all calculator buttons -->
+    <style name="CalculatorButtonBase" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:layout_rowWeight">1</item>
+        <item name="android:layout_margin">4dp</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/round_button</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+    <!-- Style for number buttons (0-9, .) -->
+    <style name="CalculatorNumberButton" parent="CalculatorButtonBase">
+        <item name="android:backgroundTint">#4A4A4A</item>
+    </style>
+
+    <!-- Style for function buttons (C, +/-) -->
+    <style name="CalculatorFunctionButton" parent="CalculatorButtonBase">
+        <item name="android:backgroundTint">#232323</item>
+    </style>
+
+    <!-- Style for operation buttons (+, -, *, /) -->
+    <style name="CalculatorOperationButton" parent="CalculatorButtonBase">
+        <item name="android:backgroundTint">#FF9500</item>
+    </style>
+
+    <!-- Style for equals button (=) -->
+    <style name="CalculatorEqualsButton" parent="CalculatorButtonBase">
+        <item name="android:backgroundTint">#FF5722</item>
+    </style>
+
+    <!-- Style for scientific buttons (sin, cos, etc.) -->
+    <style name="CalculatorScientificButton" parent="CalculatorButtonBase">
+        <item name="android:backgroundTint">#666666</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+</resources>
