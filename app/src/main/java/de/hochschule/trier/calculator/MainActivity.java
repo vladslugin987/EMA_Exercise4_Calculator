@@ -6,6 +6,7 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,6 +17,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // UI components
     private TextView displayTextView;
     private TextView operationTextView;
+    private GridLayout portraitButtonGrid;
+    private GridLayout landscapeButtonGrid;
 
     // Calculation variables
     private String currentNumber = "0";
@@ -37,28 +40,64 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Initialize UI components
         displayTextView = findViewById(R.id.displayTextView);
         operationTextView = findViewById(R.id.operationTextView);
+        portraitButtonGrid = findViewById(R.id.portraitButtonGrid);
+        landscapeButtonGrid = findViewById(R.id.landscapeButtonGrid);
 
         // Set initial display value
         updateDisplay();
 
+        // Set layout based on current orientation
+        updateLayoutForOrientation(getResources().getConfiguration().orientation);
+
         // Setup button click listeners
         setupButtonListeners();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Update the layout based on the new orientation
+        updateLayoutForOrientation(newConfig.orientation);
+    }
+
+    /**
+     * Updates the layout visibility based on orientation
+     */
+    private void updateLayoutForOrientation(int orientation) {
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // Show landscape layout, hide portrait layout
+            portraitButtonGrid.setVisibility(View.GONE);
+            landscapeButtonGrid.setVisibility(View.VISIBLE);
+        } else {
+            // Show portrait layout, hide landscape layout
+            portraitButtonGrid.setVisibility(View.VISIBLE);
+            landscapeButtonGrid.setVisibility(View.GONE);
+        }
     }
 
     /**
      * Sets up click listeners for all calculator buttons
      */
     private void setupButtonListeners() {
+        // Setup portrait mode buttons
+        setupPortraitButtonListeners();
+
+        // Setup landscape mode buttons
+        setupLandscapeButtonListeners();
+    }
+
+    /**
+     * Sets up listeners for portrait mode buttons
+     */
+    private void setupPortraitButtonListeners() {
         // Number buttons
         for (int i = 0; i <= 9; i++) {
             int buttonId = getResources().getIdentifier("button" + i, "id", getPackageName());
-            Button button = findViewById(buttonId);
-            if (button != null) {
-                button.setOnClickListener(this);
-            }
+            setupButtonIfExists(buttonId, this);
         }
 
-        // Standard operation buttons
+        // Operation buttons
         setupButtonIfExists(R.id.plusButton, this);
         setupButtonIfExists(R.id.minusButton, this);
         setupButtonIfExists(R.id.multiplyButton, this);
@@ -68,7 +107,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setupButtonIfExists(R.id.decimalButton, this);
         setupButtonIfExists(R.id.signButton, this);
 
-        // Scientific calculator buttons (only available in landscape)
+        // Clear button with special handling
+        Button clearButton = findViewById(R.id.clearButton);
+        if (clearButton != null) {
+            clearButton.setOnClickListener(this);
+            clearButton.setOnLongClickListener(this);
+        }
+    }
+
+    /**
+     * Sets up listeners for landscape mode buttons
+     */
+    private void setupLandscapeButtonListeners() {
+        // Number buttons
+        for (int i = 0; i <= 9; i++) {
+            int buttonId = getResources().getIdentifier("button" + i + "Land", "id", getPackageName());
+            setupButtonIfExists(buttonId, this);
+        }
+
+        // Basic operation buttons
+        setupButtonIfExists(R.id.plusButtonLand, this);
+        setupButtonIfExists(R.id.minusButtonLand, this);
+        setupButtonIfExists(R.id.multiplyButtonLand, this);
+        setupButtonIfExists(R.id.divideButtonLand, this);
+        setupButtonIfExists(R.id.percentButtonLand, this);
+        setupButtonIfExists(R.id.equalsButtonLand, this);
+        setupButtonIfExists(R.id.decimalButtonLand, this);
+        setupButtonIfExists(R.id.signButtonLand, this);
+
+        // Scientific calculator buttons
         setupButtonIfExists(R.id.inverseButton, this);
         setupButtonIfExists(R.id.powerButton, this);
         setupButtonIfExists(R.id.sqrtButton, this);
@@ -81,15 +148,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setupButtonIfExists(R.id.expButton, this);
 
         // Clear button with special handling
-        Button clearButton = findViewById(R.id.clearButton);
-        if (clearButton != null) {
-            clearButton.setOnClickListener(this);
-            clearButton.setOnLongClickListener(this);
+        Button clearButtonLand = findViewById(R.id.clearButtonLand);
+        if (clearButtonLand != null) {
+            clearButtonLand.setOnClickListener(this);
+            clearButtonLand.setOnLongClickListener(this);
         }
     }
 
     /**
-     * Helper method to set up button click listeners if the button exists
+     * method to set up button click listeners if the button exists
      */
     private void setupButtonIfExists(int buttonId, View.OnClickListener listener) {
         Button button = findViewById(buttonId);
@@ -105,38 +172,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         int viewId = view.getId();
 
-        // Handle number buttons (0-9)
-        for (int i = 0; i <= 9; i++) {
-            int buttonId = getResources().getIdentifier("button" + i, "id", getPackageName());
-            if (viewId == buttonId) {
-                handleNumberInput(String.valueOf(i));
-                return;
-            }
-        }
+        // number buttons (0-9) - both portrait and landscape
+        handleNumberButtonIfMatches(viewId);
 
-        // Handle basic calculator functions
-        if (viewId == R.id.decimalButton) {
+        // other buttons based on their ID
+        if (viewId == R.id.decimalButton || viewId == R.id.decimalButtonLand) {
             handleDecimalPoint();
-        } else if (viewId == R.id.clearButton) {
+        } else if (viewId == R.id.clearButton || viewId == R.id.clearButtonLand) {
             handleClearButton();
-        } else if (viewId == R.id.signButton) {
+        } else if (viewId == R.id.signButton || viewId == R.id.signButtonLand) {
             handleSignToggle();
-        } else if (viewId == R.id.percentButton) {
+        } else if (viewId == R.id.percentButton || viewId == R.id.percentButtonLand) {
             handlePercent();
-        } else if (viewId == R.id.equalsButton) {
+        } else if (viewId == R.id.equalsButton || viewId == R.id.equalsButtonLand) {
             calculateResult();
         }
-        // Handle basic operations
-        else if (viewId == R.id.plusButton) {
+        // operations in both layouts
+        else if (viewId == R.id.plusButton || viewId == R.id.plusButtonLand) {
             handleOperation("+");
-        } else if (viewId == R.id.minusButton) {
+        } else if (viewId == R.id.minusButton || viewId == R.id.minusButtonLand) {
             handleOperation("-");
-        } else if (viewId == R.id.multiplyButton) {
+        } else if (viewId == R.id.multiplyButton || viewId == R.id.multiplyButtonLand) {
             handleOperation("*");
-        } else if (viewId == R.id.divideButton) {
+        } else if (viewId == R.id.divideButton || viewId == R.id.divideButtonLand) {
             handleOperation("/");
         }
-        // Handle scientific calculator functions
+        // scientific calculator functions (landscape only)
         else if (viewId == R.id.inverseButton) {
             handleInverse();
         } else if (viewId == R.id.powerButton) {
@@ -161,11 +222,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Handles long click on the Clear button to clear everything
+     * method to check for number buttons in both layouts
+     */
+    private void handleNumberButtonIfMatches(int viewId) {
+        // Check portrait buttons
+        for (int i = 0; i <= 9; i++) {
+            int portraitId = getResources().getIdentifier("button" + i, "id", getPackageName());
+            int landscapeId = getResources().getIdentifier("button" + i + "Land", "id", getPackageName());
+            if (viewId == portraitId || viewId == landscapeId) {
+                handleNumberInput(String.valueOf(i));
+                return;
+            }
+        }
+    }
+
+    /**
+     * long click on the Clear button to clear everything
      */
     @Override
     public boolean onLongClick(View view) {
-        if (view.getId() == R.id.clearButton) {
+        int viewId = view.getId();
+        if (viewId == R.id.clearButton || viewId == R.id.clearButtonLand) {
             resetCalculator();
             return true;
         }
@@ -173,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Handles number input (0-9)
+     * number input (0-9)
      */
     private void handleNumberInput(String number) {
         if (isNewOperation || currentNumber.equals("0")) {
@@ -187,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Handles decimal point input
+     * decimal point input
      */
     private void handleDecimalPoint() {
         if (isNewOperation) {
@@ -203,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Handles single clear operation (delete last character)
+     * single clear operation (delete last character)
      */
     private void handleClearButton() {
         if (currentNumber.length() > 1) {
@@ -221,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Handles sign toggle (+/-)
+     * (+/-)
      */
     private void handleSignToggle() {
         if (currentNumber.startsWith("-")) {
@@ -233,7 +310,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Handles percent operation
+     * (%)
      */
     private void handlePercent() {
         try {
@@ -248,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Handles mathematical operations (+, -, *, /)
+     * (+, -, *, /)
      */
     private void handleOperation(String operation) {
         if (lastInputWasOperation) {
@@ -330,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Scientific calculator function implementations
 
     /**
-     * Handles inverse (1/x) function
+     * (1/x) function
      */
     private void handleInverse() {
         try {
@@ -339,19 +416,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 showError(getString(R.string.error_division_by_zero));
                 return;
             }
+            double originalValue = value;
             value = 1.0 / value;
             currentNumber = formatResult(value);
             isNewOperation = true;
             decimalPointAdded = currentNumber.contains(".");
             updateDisplay();
-            operationTextView.setText("1/" + formatResult(1.0/value) + " = " + currentNumber);
+            operationTextView.setText("1/" + formatResult(originalValue) + " = " + currentNumber);
         } catch (NumberFormatException e) {
             showError(getString(R.string.error_invalid_format));
         }
     }
 
     /**
-     * Handles power (x²) function
+     * (x^2) function
      */
     private void handlePower() {
         try {
