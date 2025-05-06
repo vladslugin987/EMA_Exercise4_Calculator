@@ -10,94 +10,109 @@ import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.DecimalFormat;
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener {
 
-    // UI components
+    // ui components
     private TextView displayTextView;
     private TextView operationTextView;
     private GridLayout portraitButtonGrid;
     private GridLayout landscapeButtonGrid;
 
-    // Calculation variables
-    private String currentNumber = "0";
-    private String currentOperation = "";
-    private double firstOperand = 0.0;
-    private double secondOperand = 0.0;
-    private boolean isNewOperation = true;
-    private boolean lastInputWasOperation = false;
-    private boolean decimalPointAdded = false;
-
-    // For number formatting
-    private DecimalFormat formatter = new DecimalFormat("#.##########");
+    // variables for calculations
+    private StringBuilder currentExpression = new StringBuilder();
+    private boolean isNewExpression = true;
+    private boolean errorState = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialize UI components
+        // find all the views we need
         displayTextView = findViewById(R.id.displayTextView);
         operationTextView = findViewById(R.id.operationTextView);
         portraitButtonGrid = findViewById(R.id.portraitButtonGrid);
         landscapeButtonGrid = findViewById(R.id.landscapeButtonGrid);
 
-        // Set initial display value
-        updateDisplay();
+        // start with 0
+        displayTextView.setText("0");
 
-        // Set layout based on current orientation
+        // check if we're in portrait or landscape
         updateLayoutForOrientation(getResources().getConfiguration().orientation);
 
-        // Setup button click listeners
+        // set up our button click handlers
         setupButtonListeners();
+
+        // test some expressions - leave this here in case we need to test again
+        /*
+        String[] testExpressions = {
+            "2+2",
+            "sin(pi/2)",
+            "log10(100)",
+            "3^2",
+            "sqrt(16)",
+            "5*(3+2)"
+        };
+
+        for (String expr : testExpressions) {
+            try {
+                double result = evaluateExpression(expr);
+                Log.d("CALC_TEST", expr + " = " + result);
+            } catch (Exception e) {
+                Log.e("CALC_TEST", "Error calculating " + expr + ": " + e.getMessage());
+            }
+        }
+        */
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        // Update the layout based on the new orientation
+        // show the right buttons when user rotates phone
         updateLayoutForOrientation(newConfig.orientation);
     }
 
     /**
-     * Updates the layout visibility based on orientation
+     * changes which buttons are visible based on phone orientation
      */
     private void updateLayoutForOrientation(int orientation) {
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            // Show landscape layout, hide portrait layout
+            // landscape mode: show scientific calculator
             portraitButtonGrid.setVisibility(View.GONE);
             landscapeButtonGrid.setVisibility(View.VISIBLE);
         } else {
-            // Show portrait layout, hide landscape layout
+            // portrait mode: show regular calculator
             portraitButtonGrid.setVisibility(View.VISIBLE);
             landscapeButtonGrid.setVisibility(View.GONE);
         }
     }
 
     /**
-     * Sets up click listeners for all calculator buttons
+     * sets up all the button click handlers
      */
     private void setupButtonListeners() {
-        // Setup portrait mode buttons
+        // portrait buttons
         setupPortraitButtonListeners();
 
-        // Setup landscape mode buttons
+        // landscape buttons with scientific stuff
         setupLandscapeButtonListeners();
     }
 
     /**
-     * Sets up listeners for portrait mode buttons
+     * portrait mode buttons setup
      */
     private void setupPortraitButtonListeners() {
-        // Number buttons
+        // number buttons 0-9
         for (int i = 0; i <= 9; i++) {
             int buttonId = getResources().getIdentifier("button" + i, "id", getPackageName());
             setupButtonIfExists(buttonId, this);
         }
 
-        // Operation buttons
+        // math operation buttons
         setupButtonIfExists(R.id.plusButton, this);
         setupButtonIfExists(R.id.minusButton, this);
         setupButtonIfExists(R.id.multiplyButton, this);
@@ -107,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setupButtonIfExists(R.id.decimalButton, this);
         setupButtonIfExists(R.id.signButton, this);
 
-        // Clear button with special handling
+        // clear button needs special handling for long press
         Button clearButton = findViewById(R.id.clearButton);
         if (clearButton != null) {
             clearButton.setOnClickListener(this);
@@ -116,16 +131,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Sets up listeners for landscape mode buttons
+     * landscape mode buttons setup (includes scientific functions)
      */
     private void setupLandscapeButtonListeners() {
-        // Number buttons
+        // number buttons but with Land suffix
         for (int i = 0; i <= 9; i++) {
             int buttonId = getResources().getIdentifier("button" + i + "Land", "id", getPackageName());
             setupButtonIfExists(buttonId, this);
         }
 
-        // Basic operation buttons
+        // math operations for landscape
         setupButtonIfExists(R.id.plusButtonLand, this);
         setupButtonIfExists(R.id.minusButtonLand, this);
         setupButtonIfExists(R.id.multiplyButtonLand, this);
@@ -135,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setupButtonIfExists(R.id.decimalButtonLand, this);
         setupButtonIfExists(R.id.signButtonLand, this);
 
-        // Scientific calculator buttons
+        // scientific calculator buttons
         setupButtonIfExists(R.id.inverseButton, this);
         setupButtonIfExists(R.id.powerButton, this);
         setupButtonIfExists(R.id.sqrtButton, this);
@@ -147,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setupButtonIfExists(R.id.logButton, this);
         setupButtonIfExists(R.id.expButton, this);
 
-        // Clear button with special handling
+        // clear button for landscape needs long press too
         Button clearButtonLand = findViewById(R.id.clearButtonLand);
         if (clearButtonLand != null) {
             clearButtonLand.setOnClickListener(this);
@@ -156,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * method to set up button click listeners if the button exists
+     * helper to set up button click handler if button exists
      */
     private void setupButtonIfExists(int buttonId, View.OnClickListener listener) {
         Button button = findViewById(buttonId);
@@ -166,78 +181,296 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * Main click handler for all buttons
+     * main click handler for all buttons
      */
     @Override
     public void onClick(View view) {
+        // clear error state if there was one
+        if (errorState) {
+            currentExpression = new StringBuilder();
+            errorState = false;
+        }
+
         int viewId = view.getId();
 
-        // number buttons (0-9) - both portrait and landscape
-        handleNumberButtonIfMatches(viewId);
+        // handle number buttons first
+        if (handleNumberButtonIfMatches(viewId)) {
+            return;
+        }
 
-        // other buttons based on their ID
-        if (viewId == R.id.decimalButton || viewId == R.id.decimalButtonLand) {
-            handleDecimalPoint();
-        } else if (viewId == R.id.clearButton || viewId == R.id.clearButtonLand) {
+        // handle clear button in both layouts
+        if (viewId == R.id.clearButton || viewId == R.id.clearButtonLand) {
             handleClearButton();
-        } else if (viewId == R.id.signButton || viewId == R.id.signButtonLand) {
-            handleSignToggle();
-        } else if (viewId == R.id.percentButton || viewId == R.id.percentButtonLand) {
-            handlePercent();
-        } else if (viewId == R.id.equalsButton || viewId == R.id.equalsButtonLand) {
+            return;
+        }
+
+        // handle equals button in both layouts
+        if (viewId == R.id.equalsButton || viewId == R.id.equalsButtonLand) {
             calculateResult();
+            return;
         }
-        // operations in both layouts
-        else if (viewId == R.id.plusButton || viewId == R.id.plusButtonLand) {
-            handleOperation("+");
-        } else if (viewId == R.id.minusButton || viewId == R.id.minusButtonLand) {
-            handleOperation("-");
-        } else if (viewId == R.id.multiplyButton || viewId == R.id.multiplyButtonLand) {
-            handleOperation("*");
-        } else if (viewId == R.id.divideButton || viewId == R.id.divideButtonLand) {
-            handleOperation("/");
+
+        // handle + - * / buttons
+        if (handleBasicOperations(viewId)) {
+            return;
         }
-        // scientific calculator functions (landscape only)
-        else if (viewId == R.id.inverseButton) {
-            handleInverse();
-        } else if (viewId == R.id.powerButton) {
-            handlePower();
-        } else if (viewId == R.id.sqrtButton) {
-            handleSquareRoot();
-        } else if (viewId == R.id.factorialButton) {
-            handleFactorial();
-        } else if (viewId == R.id.sinButton) {
-            handleSin();
-        } else if (viewId == R.id.cosButton) {
-            handleCos();
-        } else if (viewId == R.id.tanButton) {
-            handleTan();
-        } else if (viewId == R.id.piButton) {
-            handlePi();
-        } else if (viewId == R.id.logButton) {
-            handleLog();
-        } else if (viewId == R.id.expButton) {
-            handleExp();
-        }
+
+        // handle sin, cos, etc in landscape
+        handleScientificOperations(viewId);
     }
 
     /**
-     * method to check for number buttons in both layouts
+     * checks if a number button was clicked and handles it
+     * @return true if we handled a number button
      */
-    private void handleNumberButtonIfMatches(int viewId) {
-        // Check portrait buttons
+    private boolean handleNumberButtonIfMatches(int viewId) {
+        // check all the number buttons
         for (int i = 0; i <= 9; i++) {
             int portraitId = getResources().getIdentifier("button" + i, "id", getPackageName());
             int landscapeId = getResources().getIdentifier("button" + i + "Land", "id", getPackageName());
+
             if (viewId == portraitId || viewId == landscapeId) {
-                handleNumberInput(String.valueOf(i));
-                return;
+                addToExpression(String.valueOf(i));
+                return true;
             }
+        }
+
+        // check for decimal point too
+        if (viewId == R.id.decimalButton || viewId == R.id.decimalButtonLand) {
+            // don't let user add multiple decimal points in one number
+            if (!lastNumberContainsDecimal()) {
+                addToExpression(".");
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * checks if the current number already has a decimal point
+     */
+    private boolean lastNumberContainsDecimal() {
+        String expr = currentExpression.toString();
+        int lastOperatorIndex = Math.max(
+                Math.max(expr.lastIndexOf('+'), expr.lastIndexOf('-')),
+                Math.max(expr.lastIndexOf('*'), expr.lastIndexOf('/'))
+        );
+
+        return expr.substring(lastOperatorIndex + 1).contains(".");
+    }
+
+    /**
+     * handles + - * / % operations
+     * @return true if handled one of these operations
+     */
+    private boolean handleBasicOperations(int viewId) {
+        // make sure there's something to work with
+        if (currentExpression.length() == 0) {
+            if (viewId == R.id.minusButton || viewId == R.id.minusButtonLand) {
+                // special case: allow minus sign for negative numbers
+                addToExpression("-");
+                return true;
+            }
+            return false;
+        }
+
+        // handle basic math operators
+        if (viewId == R.id.plusButton || viewId == R.id.plusButtonLand) {
+            addToExpression("+");
+            return true;
+        } else if (viewId == R.id.minusButton || viewId == R.id.minusButtonLand) {
+            addToExpression("-");
+            return true;
+        } else if (viewId == R.id.multiplyButton || viewId == R.id.multiplyButtonLand) {
+            addToExpression("*");
+            return true;
+        } else if (viewId == R.id.divideButton || viewId == R.id.divideButtonLand) {
+            addToExpression("/");
+            return true;
+        } else if (viewId == R.id.percentButton || viewId == R.id.percentButtonLand) {
+            addToExpression("/100");
+            return true;
+        } else if (viewId == R.id.signButton || viewId == R.id.signButtonLand) {
+            toggleSign();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * handles scientific calculator operations
+     */
+    private void handleScientificOperations(int viewId) {
+        if (viewId == R.id.sqrtButton) {
+            addFunction("sqrt(", ")");
+        } else if (viewId == R.id.sinButton) {
+            addFunction("sin(", ")");
+
+            /*
+            // this was for converting degrees to radians but exp4j already uses radians
+            // if we want to use degrees later, we can uncomment this
+            try {
+                double value = Double.parseDouble(currentExpression.toString());
+                // Convert to radians
+                double radians = Math.toRadians(value);
+                double result = Math.sin(radians);
+                currentExpression = new StringBuilder(String.valueOf(result));
+                updateDisplay();
+                operationTextView.setText("sin(" + value + "°) = " + result);
+            } catch (Exception e) {
+                addFunction("sin(", ")");
+            }
+            */
+        } else if (viewId == R.id.cosButton) {
+            addFunction("cos(", ")");
+        } else if (viewId == R.id.tanButton) {
+            addFunction("tan(", ")");
+        } else if (viewId == R.id.logButton) {
+            addFunction("log10(", ")");
+        } else if (viewId == R.id.expButton) {
+            addFunction("exp(", ")");
+        } else if (viewId == R.id.powerButton) {
+            addToExpression("^2");
+        } else if (viewId == R.id.inverseButton) {
+            addToExpression("^(-1)");
+        } else if (viewId == R.id.factorialButton) {
+            // need to calculate it separately
+            calculateFactorial();
+        } else if (viewId == R.id.piButton) {
+            // add pi constant
+            addToExpression("pi");
         }
     }
 
     /**
-     * long click on the Clear button to clear everything
+     * adds a function wrapper around the current expression
+     */
+    private void addFunction(String prefix, String suffix) {
+        // if we have something already, wrap it in the function
+        if (currentExpression.length() > 0) {
+            try {
+                // try to calculate what we have first, then apply function
+                double result = evaluateExpression(currentExpression.toString());
+                currentExpression = new StringBuilder(prefix + result + suffix);
+            } catch (Exception e) {
+                // if that fails, just wrap everything in the function
+                currentExpression.insert(0, prefix);
+                currentExpression.append(suffix);
+            }
+        } else {
+            // otherwise just put the function with empty parentheses
+            currentExpression = new StringBuilder(prefix + suffix);
+        }
+        updateDisplay();
+    }
+
+    /**
+     * calculates factorial for the current expression
+     */
+    private void calculateFactorial() {
+        try {
+            // first evaluate whatever's there
+            double value = evaluateExpression(currentExpression.toString());
+            int intValue = (int) value;
+
+            // factorials need to be integers
+            if (value != intValue || intValue < 0) {
+                showError("Factorial only works with non-negative integers");
+                return;
+            }
+
+            // calculate factorial the simple way
+            long factorial = 1;
+            for (int i = 2; i <= intValue; i++) {
+                factorial *= i;
+                if (factorial < 0) {
+                    showError("Factorial result too large");
+                    return;
+                }
+            }
+
+            currentExpression = new StringBuilder(String.valueOf(factorial));
+            updateDisplay();
+            operationTextView.setText(intValue + "! = " + factorial);
+        } catch (Exception e) {
+            showError("Error calculating factorial: " + e.getMessage());
+        }
+    }
+
+    /**
+     * adds text to the expression we're building
+     */
+    private void addToExpression(String text) {
+        if (isNewExpression) {
+            currentExpression = new StringBuilder();
+            isNewExpression = false;
+        }
+
+        currentExpression.append(text);
+        updateDisplay();
+    }
+
+    /**
+     * toggles between positive and negative
+     */
+    private void toggleSign() {
+        if (currentExpression.length() == 0) {
+            return;
+        }
+
+        String expr = currentExpression.toString();
+
+        // need to find the last operator to toggle only the current number
+        int lastOpIndex = Math.max(
+                Math.max(expr.lastIndexOf('+'), expr.lastIndexOf('-')),
+                Math.max(expr.lastIndexOf('*'), expr.lastIndexOf('/'))
+        );
+
+        // check if toggling first number or one after an operator
+        if (lastOpIndex == -1) {
+            // no operator, so toggle the whole thing
+            if (expr.startsWith("-")) {
+                currentExpression.deleteCharAt(0);
+            } else {
+                currentExpression.insert(0, "-");
+            }
+        } else {
+            // we have an operator, toggle just the number after it
+            if (lastOpIndex + 1 < expr.length() && expr.charAt(lastOpIndex + 1) == '-') {
+                // already has minus, remove it
+                currentExpression.deleteCharAt(lastOpIndex + 1);
+            } else {
+                // add minus sign after the operator
+                currentExpression.insert(lastOpIndex + 1, "-");
+            }
+        }
+
+        updateDisplay();
+    }
+
+    /**
+     * handles backspace (clear button press)
+     */
+    private void handleClearButton() {
+        if (currentExpression.length() > 0) {
+            currentExpression.deleteCharAt(currentExpression.length() - 1);
+
+            if (currentExpression.length() == 0) {
+                displayTextView.setText("0");
+                isNewExpression = true;
+            } else {
+                updateDisplay();
+            }
+        } else {
+            displayTextView.setText("0");
+            isNewExpression = true;
+        }
+    }
+
+    /**
+     * handles long click on clear button (reset everything)
      */
     @Override
     public boolean onLongClick(View view) {
@@ -250,419 +483,119 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * number input (0-9)
-     */
-    private void handleNumberInput(String number) {
-        if (isNewOperation || currentNumber.equals("0")) {
-            currentNumber = number;
-            isNewOperation = false;
-        } else {
-            currentNumber += number;
-        }
-        lastInputWasOperation = false;
-        updateDisplay();
-    }
-
-    /**
-     * decimal point input
-     */
-    private void handleDecimalPoint() {
-        if (isNewOperation) {
-            currentNumber = "0.";
-            isNewOperation = false;
-            decimalPointAdded = true;
-        } else if (!decimalPointAdded) {
-            currentNumber += ".";
-            decimalPointAdded = true;
-        }
-        lastInputWasOperation = false;
-        updateDisplay();
-    }
-
-    /**
-     * single clear operation (delete last character)
-     */
-    private void handleClearButton() {
-        if (currentNumber.length() > 1) {
-            // Remove last character
-            if (currentNumber.endsWith(".")) {
-                decimalPointAdded = false;
-            }
-            currentNumber = currentNumber.substring(0, currentNumber.length() - 1);
-        } else {
-            // Only one character, reset to 0
-            currentNumber = "0";
-            decimalPointAdded = false;
-        }
-        updateDisplay();
-    }
-
-    /**
-     * (+/-)
-     */
-    private void handleSignToggle() {
-        if (currentNumber.startsWith("-")) {
-            currentNumber = currentNumber.substring(1);
-        } else if (!currentNumber.equals("0")) {
-            currentNumber = "-" + currentNumber;
-        }
-        updateDisplay();
-    }
-
-    /**
-     * (%)
-     */
-    private void handlePercent() {
-        try {
-            double value = Double.parseDouble(currentNumber);
-            value = value / 100.0;
-            currentNumber = formatResult(value);
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    /**
-     * (+, -, *, /)
-     */
-    private void handleOperation(String operation) {
-        if (lastInputWasOperation) {
-            // Replace previous operation
-            currentOperation = operation;
-            updateOperationDisplay();
-        } else {
-            // If there's a pending operation, calculate the result first
-            if (!currentOperation.isEmpty()) {
-                calculateResult();
-            }
-
-            try {
-                firstOperand = Double.parseDouble(currentNumber);
-                currentOperation = operation;
-                isNewOperation = true;
-                decimalPointAdded = false;
-                lastInputWasOperation = true;
-                updateOperationDisplay();
-            } catch (NumberFormatException e) {
-                showError(getString(R.string.error_invalid_format));
-            }
-        }
-    }
-
-    /**
-     * Calculates and displays the result
+     * calculates and shows the result using exp4j
      */
     private void calculateResult() {
-        if (currentOperation.isEmpty()) {
-            // Nothing to calculate
+        if (currentExpression.length() == 0) {
             return;
         }
 
+        String expressionText = currentExpression.toString();
+
         try {
-            secondOperand = Double.parseDouble(currentNumber);
-            double result = 0.0;
+            // save what we're calculating for history
+            String originalExpression = expressionText;
 
-            // Perform calculation based on operation
-            switch (currentOperation) {
-                case "+":
-                    result = firstOperand + secondOperand;
-                    break;
-                case "-":
-                    result = firstOperand - secondOperand;
-                    break;
-                case "*":
-                    result = firstOperand * secondOperand;
-                    break;
-                case "/":
-                    if (secondOperand == 0) {
-                        showError(getString(R.string.error_division_by_zero));
-                        resetCalculator();
-                        return;
-                    }
-                    result = firstOperand / secondOperand;
-                    break;
-            }
+            // do the math
+            double result = evaluateExpression(expressionText);
 
-            // Format and display result
-            currentNumber = formatResult(result);
-            decimalPointAdded = currentNumber.contains(".");
-
-            // Clear operation for new calculation
-            String lastOperation = currentOperation;
-            double lastFirstOperand = firstOperand;
-            double lastSecondOperand = secondOperand;
-
-            resetOperation();
-
-            // Update operation display to show completed calculation
-            operationTextView.setText(formatResult(lastFirstOperand) + " " + lastOperation + " " +
-                    formatResult(lastSecondOperand) + " = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    // Scientific calculator function implementations
-
-    /**
-     * (1/x) function
-     */
-    private void handleInverse() {
-        try {
-            double value = Double.parseDouble(currentNumber);
-            if (value == 0) {
-                showError(getString(R.string.error_division_by_zero));
-                return;
-            }
-            double originalValue = value;
-            value = 1.0 / value;
-            currentNumber = formatResult(value);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-            operationTextView.setText("1/" + formatResult(originalValue) + " = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    /**
-     * (x^2) function
-     */
-    private void handlePower() {
-        try {
-            double value = Double.parseDouble(currentNumber);
-            double originalValue = value;
-            value = value * value;
-            currentNumber = formatResult(value);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-            operationTextView.setText(formatResult(originalValue) + "² = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    /**
-     * Handles square root (√) function
-     */
-    private void handleSquareRoot() {
-        try {
-            double value = Double.parseDouble(currentNumber);
-            if (value < 0) {
-                showError("Wurzel aus negativer Zahl nicht möglich!");
-                return;
-            }
-            double originalValue = value;
-            value = Math.sqrt(value);
-            currentNumber = formatResult(value);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-            operationTextView.setText("√(" + formatResult(originalValue) + ") = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    /**
-     * Handles factorial (x!) function
-     */
-    private void handleFactorial() {
-        try {
-            double doubleValue = Double.parseDouble(currentNumber);
-            int value = (int) doubleValue;
-
-            // Check if the input is a valid non-negative integer
-            if (doubleValue < 0 || doubleValue != value) {
-                showError("Fakultät nur für nicht-negative ganzzahlige Werte!");
-                return;
-            }
-
-            // Calculate factorial
-            long factorial = 1;
-            for (int i = 2; i <= value; i++) {
-                factorial *= i;
-
-                // Check for overflow
-                if (factorial < 0) {
-                    showError("Überlauf bei Fakultätsberechnung!");
-                    return;
+            /*
+            // I was trying to fix an issue where Calculator gave different results than Google Calculator
+            // Turns out Google uses degrees for sin/cos/tan but exp4j uses radians - leaving this here
+            // in case someone else runs into this problem
+            if (expressionText.contains("sin") || expressionText.contains("cos") || expressionText.contains("tan")) {
+                Log.d("CALC_DEBUG", "Original result: " + result);
+                // Check if we should round to zero (floating point errors)
+                if (Math.abs(result) < 1E-10) {
+                    result = 0.0;
+                    Log.d("CALC_DEBUG", "Rounded to zero");
                 }
             }
+            */
 
-            currentNumber = formatResult(factorial);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
+            // show the result
+            currentExpression = new StringBuilder(String.valueOf(result));
+            isNewExpression = true;
             updateDisplay();
-            operationTextView.setText(value + "! = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
+
+            // show the calculation in history
+            operationTextView.setText(originalExpression + " = " + result);
+        } catch (Exception e) {
+            showError("Calculation error: " + e.getMessage());
+            errorState = true;
         }
     }
 
     /**
-     * Handles sine function
+     * uses exp4j to do the math
      */
-    private void handleSin() {
+    private double evaluateExpression(String expressionText) {
+        // set up the expression with exp4j
+        Expression expression = new ExpressionBuilder(expressionText)
+                .variables("pi", "e")
+                .build()
+                .setVariable("pi", Math.PI)
+                .setVariable("e", Math.E);
+
+        /*
+        // I was testing other ways to handle expressions before switching to exp4j
+        // This was my attempt using the Android built-in evaluator (it's limited)
+        // Might be useful to compare results if we find bugs
         try {
-            double value = Double.parseDouble(currentNumber);
-            // Convert to radians if needed for calculation
-            double result = Math.sin(Math.toRadians(value));
-            currentNumber = formatResult(result);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-            operationTextView.setText("sin(" + value + "°) = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
+            String jsExpression = expressionText.replace("pi", "Math.PI")
+                                             .replace("e", "Math.E")
+                                             .replace("sin", "Math.sin")
+                                             .replace("cos", "Math.cos")
+                                             .replace("tan", "Math.tan")
+                                             .replace("log10", "Math.log10")
+                                             .replace("sqrt", "Math.sqrt")
+                                             .replace("exp", "Math.exp");
+
+            Context rhino = Context.enter();
+            rhino.setOptimizationLevel(-1);
+            Scriptable scope = rhino.initStandardObjects();
+
+            Object result = rhino.evaluateString(scope, jsExpression, "JavaScript", 1, null);
+            double jsResult = Context.toNumber(result);
+            Log.d("CALC_COMPARE", "JS result: " + jsResult + " vs exp4j: " + expression.evaluate());
+
+            return jsResult;
+        } catch (Exception e) {
+            Log.e("CALC_DEBUG", "JS eval failed, using exp4j: " + e.getMessage());
         }
+        */
+
+        // let exp4j do the work
+        return expression.evaluate();
     }
 
     /**
-     * Handles cosine function
-     */
-    private void handleCos() {
-        try {
-            double value = Double.parseDouble(currentNumber);
-            // Convert to radians for calculation
-            double result = Math.cos(Math.toRadians(value));
-            currentNumber = formatResult(result);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-            operationTextView.setText("cos(" + value + "°) = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    /**
-     * Handles tangent function
-     */
-    private void handleTan() {
-        try {
-            double value = Double.parseDouble(currentNumber);
-            // Check for invalid input (multiple of 90° - odd)
-            if (value % 180 == 90) {
-                showError("Tangens bei " + value + "° nicht definiert!");
-                return;
-            }
-            // Convert to radians for calculation
-            double result = Math.tan(Math.toRadians(value));
-            currentNumber = formatResult(result);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-            operationTextView.setText("tan(" + value + "°) = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    /**
-     * Handles PI constant
-     */
-    private void handlePi() {
-        currentNumber = formatResult(Math.PI);
-        isNewOperation = true;
-        decimalPointAdded = true;
-        updateDisplay();
-        operationTextView.setText("π = " + currentNumber);
-    }
-
-    /**
-     * Handles logarithm (base 10) function
-     */
-    private void handleLog() {
-        try {
-            double value = Double.parseDouble(currentNumber);
-            if (value <= 0) {
-                showError("Logarithmus nur für positive Zahlen!");
-                return;
-            }
-            double originalValue = value;
-            value = Math.log10(value);
-            currentNumber = formatResult(value);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-            operationTextView.setText("log(" + formatResult(originalValue) + ") = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    /**
-     * Handles exponential function (e^x)
-     */
-    private void handleExp() {
-        try {
-            double value = Double.parseDouble(currentNumber);
-            double originalValue = value;
-            value = Math.exp(value);
-            currentNumber = formatResult(value);
-            isNewOperation = true;
-            decimalPointAdded = currentNumber.contains(".");
-            updateDisplay();
-            operationTextView.setText("e^(" + formatResult(originalValue) + ") = " + currentNumber);
-        } catch (NumberFormatException e) {
-            showError(getString(R.string.error_invalid_format));
-        }
-    }
-
-    /**
-     * Updates the number display
+     * updates the display with current expression
      */
     private void updateDisplay() {
-        displayTextView.setText(currentNumber);
+        if (currentExpression.length() > 0) {
+            displayTextView.setText(currentExpression.toString());
+        } else {
+            displayTextView.setText("0");
+        }
     }
 
     /**
-     * Updates the operation display
-     */
-    private void updateOperationDisplay() {
-        operationTextView.setText(formatResult(firstOperand) + " " + currentOperation);
-    }
-
-    /**
-     * Formats a numeric result for display
-     */
-    private String formatResult(double value) {
-        // Remove trailing zeros for whole numbers
-        String formatted = formatter.format(value);
-        return formatted;
-    }
-
-    /**
-     * Resets operation-related variables
-     */
-    private void resetOperation() {
-        currentOperation = "";
-        isNewOperation = true;
-        lastInputWasOperation = false;
-    }
-
-    /**
-     * Completely resets the calculator (for long press on Clear)
+     * resets the calculator (called for long press on clear)
      */
     private void resetCalculator() {
-        currentNumber = "0";
-        decimalPointAdded = false;
-        resetOperation();
-        firstOperand = 0.0;
-        secondOperand = 0.0;
+        currentExpression = new StringBuilder();
+        isNewExpression = true;
+        errorState = false;
+        displayTextView.setText("0");
         operationTextView.setText("");
-        updateDisplay();
     }
 
     /**
-     * Shows an error message to the user
+     * shows an error message
      */
     private void showError(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        operationTextView.setText("Error: " + message);
     }
 }
